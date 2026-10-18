@@ -1,101 +1,450 @@
-import { useEffect, useMemo, useState } from 'react';
-import { AlarmClock, ArrowUpRight, Bell, BookOpen, CalendarDays, Check, ChevronRight, Clock3, Code2, Flame, Github, GraduationCap, LayoutDashboard, ListTodo, Plus, Search, Settings2, Target, Trophy, Trash2, X } from 'lucide-react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { 
+  Search, LayoutDashboard, BookOpen, Code2, Settings, X, 
+  CheckCircle2, Target, Menu, Play, Pause, RotateCcw, Timer, ExternalLink, 
+  Trash2, Plus, FolderGit2, Award, Github, Link as LinkIcon, 
+  Eye, EyeOff, Star, Trophy, Sun, Moon, Flame, Medal, Calendar
+} from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { CATALOG_DATA, CERTIFICATIONS_DATA } from './data';
+import { AddToCalendarButton } from 'add-to-calendar-button-react';
 
-type Task = { id: string; title: string; area: string; minutes: number; done: boolean; date: string };
-type Reminder = { id: string; title: string; time: string; enabled: boolean };
-const starterTasks: Task[] = [
-  { id:'1', title:'HTML semántico y accesibilidad', area:'Fundamentos web', minutes:45, done:true, date:'2026-10-17' },
-  { id:'2', title:'CSS Grid y Flexbox: práctica', area:'Frontend', minutes:60, done:false, date:'2026-10-17' },
-  { id:'3', title:'JavaScript: arrays y métodos', area:'JavaScript', minutes:45, done:false, date:'2026-10-18' },
-  { id:'4', title:'Construir una landing responsive', area:'Proyecto práctico', minutes:90, done:false, date:'2026-10-19' },
-];
-const roadmap = [
-  { quarter:'Q4 2026', title:'Fundamentos sólidos', detail:'HTML, CSS, Git, JavaScript y accesibilidad', progress:35, color:'mint' },
-  { quarter:'Q1 2027', title:'Frontend profesional', detail:'TypeScript, React, APIs, testing y UI/UX', progress:0, color:'violet' },
-  { quarter:'Q2 2027', title:'Backend y bases de datos', detail:'Node.js, Express, PostgreSQL, autenticación', progress:0, color:'blue' },
-  { quarter:'Q3 2027', title:'Full-stack y despliegue', detail:'Proyectos reales, CI/CD, seguridad y portfolio', progress:0, color:'orange' },
-];
-const initialReminders: Reminder[] = [
-  { id:'r1', title:'Sesión de estudio', time:'09:00', enabled:true },
-  { id:'r2', title:'Repaso y notas', time:'20:00', enabled:false },
-];
-const today = () => new Date().toISOString().slice(0,10);
-const uid = () => Math.random().toString(36).slice(2,10);
-
-export default function App() {
-  const [tasks, setTasks] = useState<Task[]>(() => { try { const v = localStorage.getItem('devpath-tasks'); return v ? JSON.parse(v) as Task[] : starterTasks; } catch { return starterTasks; } });
-  const [reminders, setReminders] = useState<Reminder[]>(() => { try { const v = localStorage.getItem('devpath-reminders'); return v ? JSON.parse(v) as Reminder[] : initialReminders; } catch { return initialReminders; } });
-  const [active, setActive] = useState('Overview');
-  const [query, setQuery] = useState('');
-  const [showAdd, setShowAdd] = useState(false);
-  const [newTitle, setNewTitle] = useState('');
-  const [newArea, setNewArea] = useState('Frontend');
-  const [newMinutes, setNewMinutes] = useState('45');
-  const [notice, setNotice] = useState('');
-  const [timerMinutes, setTimerMinutes] = useState(25);
-  const [timerRunning, setTimerRunning] = useState(false);
-  const [secondsLeft, setSecondsLeft] = useState(25*60);
-  const [reminderTime, setReminderTime] = useState('18:00');
-  useEffect(() => { localStorage.setItem('devpath-tasks', JSON.stringify(tasks)); }, [tasks]);
-  useEffect(() => { localStorage.setItem('devpath-reminders', JSON.stringify(reminders)); }, [reminders]);
-  useEffect(() => {
-    if (!timerRunning) return;
-    const id = window.setInterval(() => setSecondsLeft(s => { if (s <= 1) { setTimerRunning(false); setNotice('¡Sesión terminada! Tómate un descanso.'); return 0; } return s - 1; }), 1000);
-    return () => window.clearInterval(id);
-  }, [timerRunning]);
-  const completed = tasks.filter(t => t.done).length;
-  const progress = tasks.length ? Math.round(completed/tasks.length*100) : 0;
-  const filteredTasks = useMemo(() => tasks.filter(t => (t.title+' '+t.area).toLowerCase().includes(query.toLowerCase())), [tasks,query]);
-  const todayTasks = tasks.filter(t => t.date === today());
-  const todayDone = todayTasks.filter(t => t.done).length;
-  const notify = async () => {
-    if (!('Notification' in window)) { setNotice('Este navegador no admite notificaciones.'); return; }
-    if (Notification.permission === 'granted') { new Notification('DevPath 2027', { body:'Las notificaciones están activadas en este navegador.' }); setNotice('Notificación de prueba enviada.'); return; }
-    const permission = await Notification.requestPermission();
-    if (permission === 'granted') { new Notification('DevPath 2027', { body:'¡Perfecto! Las notificaciones están activadas mientras la app puede ejecutarse.' }); setNotice('Notificaciones activadas.'); }
-    else setNotice('Permiso de notificaciones no concedido.');
-  };
-  const addTask = (e: React.FormEvent) => {
-    e.preventDefault(); if (!newTitle.trim()) return;
-    setTasks(prev => [...prev, { id:uid(), title:newTitle.trim(), area:newArea, minutes:Number(newMinutes)||45, done:false, date:today() }]);
-    setNewTitle(''); setShowAdd(false); setNotice('Tarea añadida a tu plan.');
-  };
-  const toggleTask = (id:string) => setTasks(prev => prev.map(t => t.id===id ? {...t,done:!t.done} : t));
-  const formatTime = (s:number) => `${Math.floor(s/60).toString().padStart(2,'0')}:${(s%60).toString().padStart(2,'0')}`;
-  const startTimer = () => { if (secondsLeft === 0) setSecondsLeft(timerMinutes*60); setTimerRunning(v=>!v); };
-  const setDuration = (n:number) => { setTimerMinutes(n); setSecondsLeft(n*60); setTimerRunning(false); };
-  const navItems = [{label:'Overview',icon:LayoutDashboard},{label:'My Roadmap',icon:Target},{label:'Study Tasks',icon:ListTodo},{label:'Certificates',icon:GraduationCap},{label:'Settings',icon:Settings2}];
-  return <div className="app-shell">
-    <aside className="sidebar">
-      <a className="brand" href="#" onClick={e=>{e.preventDefault();setActive('Overview')}}><span className="brand-mark"><Code2 size={21}/></span><span>DevPath<span className="brand-year">2027</span><small>YOUR DEVELOPER JOURNEY</small></span></a>
-      <div className="workspace-label">WORKSPACE <span className="tiny-dot"/></div>
-      <nav>{navItems.map(({label,icon:Icon})=><button key={label} className={active===label?'nav-item active':'nav-item'} onClick={()=>setActive(label)}><Icon size={18}/><span>{label}</span>{label==='Study Tasks'&&<span className="nav-count">{tasks.filter(t=>!t.done).length}</span>}</button>)}</nav>
-      <div className="sidebar-bottom">
-        <div className="streak-card"><div className="streak-icon"><Flame size={18}/></div><div><strong>Keep the streak alive</strong><p>Small steps, every day.</p></div><span className="streak-number">3 <Flame size={13}/></span></div>
-        <div className="profile"><div className="avatar">JP</div><div className="profile-info"><strong>My learning space</strong><span>Full-stack path</span></div><button className="icon-button" aria-label="Settings" onClick={()=>setActive('Settings')}><Settings2 size={17}/></button></div>
-      </div>
-    </aside>
-    <main className="main-area">
-      <header className="topbar"><div className="breadcrumbs">Workspace <ChevronRight size={14}/> <strong>{active}</strong></div><div className="top-actions"><label className="search-box"><Search size={16}/><input value={query} onChange={e=>setQuery(e.target.value)} placeholder="Search tasks..." aria-label="Search tasks"/><kbd>⌘ K</kbd></label><button className="icon-button notification-button" onClick={notify} aria-label="Enable notifications"><Bell size={18}/><i/></button><div className="avatar small-avatar">JP</div></div></header>
-      <div className="content">
-        {notice && <div className="notice" role="status">{notice}<button onClick={()=>setNotice('')} aria-label="Dismiss"><X size={15}/></button></div>}
-        {active==='Overview' && <>
-          <section className="welcome-row"><div><div className="eyebrow"><span className="live-dot"/> YOUR 2027 CAREER PLAN</div><h1>Build your future,<br/><span>one line at a time.</span></h1><p className="welcome-copy">A clear path from learning the fundamentals to becoming a job-ready full-stack developer.</p><div className="welcome-buttons"><button className="primary-button" onClick={()=>setActive('My Roadmap')}>Explore my roadmap <ArrowUpRight size={17}/></button><button className="secondary-button" onClick={()=>setActive('Study Tasks')}><BookOpen size={16}/> View study plan</button></div></div><div className="hero-art"><div className="orbit orbit-one"/><div className="orbit orbit-two"/><div className="hero-core"><Code2 size={42}/><span>DEV</span></div><span className="floating-chip chip-react">⚛ React</span><span className="floating-chip chip-js">JS</span><span className="floating-chip chip-db">▤ SQL</span><span className="floating-chip chip-git"><Github size={17}/></span></div></section>
-          <section className="stats-grid"><article className="stat-card"><div className="stat-top"><span>Learning progress</span><span className="stat-icon mint"><Target size={18}/></span></div><div className="stat-value">{progress}<small>%</small></div><div className="progress-track"><span style={{width:progress+'%'}}/></div><div className="stat-foot">{completed} of {tasks.length} tasks completed</div></article><article className="stat-card"><div className="stat-top"><span>Study time planned</span><span className="stat-icon violet"><Clock3 size={18}/></span></div><div className="stat-value">{Math.floor(tasks.reduce((n,t)=>n+t.minutes,0)/60)}<small>h</small> {tasks.reduce((n,t)=>n+t.minutes,0)%60}<small>m</small></div><div className="stat-foot"><span className="positive">↗</span> Keep building consistency</div></article><article className="stat-card"><div className="stat-top"><span>Today's checklist</span><span className="stat-icon orange"><Check size={18}/></span></div><div className="stat-value">{todayDone}<small>/{todayTasks.length}</small></div><div className="stat-foot">{todayTasks.length ? 'You are making progress today' : 'Add a task to start your day'}</div></article><article className="stat-card"><div className="stat-top"><span>Career target</span><span className="stat-icon blue"><Trophy size={18}/></span></div><div className="stat-value target-value">Full-stack</div><div className="stat-foot">Portfolio + first remote role</div></article></section>
-          <section className="dashboard-grid"><article className="panel roadmap-panel"><div className="panel-heading"><div><h2>Your roadmap</h2><p>Four milestones to your next chapter.</p></div><button className="text-button" onClick={()=>setActive('My Roadmap')}>View all <ChevronRight size={15}/></button></div><div className="roadmap-list">{roadmap.map((r,i)=><div className="roadmap-item" key={r.quarter}><div className={'roadmap-symbol '+r.color}>{i===0?<Code2 size={18}/>:i===1?<LayoutDashboard size={18}/>:i===2?<BookOpen size={18}/>:<Trophy size={18}/>}</div><div className="roadmap-detail"><div className="roadmap-title-line"><strong>{r.title}</strong><span>{r.quarter}</span></div><p>{r.detail}</p><div className="mini-progress"><span className={r.color} style={{width:r.progress+'%'}}/></div></div><span className="roadmap-percent">{r.progress}%</span></div>)}</div></article>
-          <article className="panel focus-panel"><div className="panel-heading"><div><h2>Focus session</h2><p>Protect your time. Learn deeply.</p></div><span className="stat-icon mint"><AlarmClock size={18}/></span></div><div className="timer-ring"><div className="timer-inner"><span>FOCUS TIME</span><strong>{formatTime(secondsLeft)}</strong><small>{timerRunning?'Session in progress':'Ready when you are'}</small></div></div><div className="timer-presets">{[15,25,45,60].map(n=><button key={n} className={timerMinutes===n?'preset active-preset':'preset'} onClick={()=>setDuration(n)}>{n}m</button>)}</div><button className="primary-button timer-button" onClick={startTimer}>{timerRunning?'Pause session':secondsLeft===0?'Start again':'Start focusing'} <ChevronRight size={16}/></button></article></section>
-          <section className="panel tasks-panel"><div className="panel-heading"><div><h2>Up next</h2><p>Your next steps, right here.</p></div><button className="secondary-button compact" onClick={()=>setShowAdd(true)}><Plus size={16}/> Add task</button></div><TaskList tasks={filteredTasks.slice(0,4)} onToggle={toggleTask} onDelete={id=>setTasks(prev=>prev.filter(t=>t.id!==id))}/><button className="view-tasks" onClick={()=>setActive('Study Tasks')}>View all study tasks <ArrowUpRight size={15}/></button></section>
-        </>}
-        {active==='My Roadmap' && <section className="page-section"><div className="page-title"><div className="eyebrow">YOUR LEARNING JOURNEY</div><h1>My roadmap</h1><p>A structured path from fundamentals to full-stack projects.</p></div><div className="roadmap-full">{roadmap.map((r,i)=><article className="panel milestone" key={r.quarter}><div className={'roadmap-symbol '+r.color}><span>{String(i+1).padStart(2,'0')}</span></div><div className="milestone-body"><div className="roadmap-title-line"><h2>{r.title}</h2><span>{r.quarter}</span></div><p>{r.detail}</p><div className="progress-track"><span style={{width:r.progress+'%'}}/></div><small>{r.progress}% completed · Suggested pace: 8–10 hours/week</small><div className="resource-tags">{(i===0?['freeCodeCamp','MDN Web Docs','GitHub Skills']:i===1?['The Odin Project','React docs','TypeScript']:i===2?['Node.js','PostgreSQL','Express']:['Full-stack projects','Testing','Deployment']).map(tag=><span key={tag}>{tag}</span>)}</div></div></article>)}</div></section>}
-        {active==='Study Tasks' && <section className="page-section"><div className="page-title title-action"><div><div className="eyebrow">DAILY PRACTICE</div><h1>Study tasks</h1><p>Make progress by finishing one focused task at a time.</p></div><button className="primary-button" onClick={()=>setShowAdd(true)}><Plus size={17}/> Add task</button></div><div className="task-summary"><span><Check size={16}/> {completed} completed</span><span><ListTodo size={16}/> {tasks.length-completed} remaining</span><span><Clock3 size={16}/> {tasks.filter(t=>!t.done).reduce((n,t)=>n+t.minutes,0)} min left</span></div><article className="panel"><TaskList tasks={filteredTasks} onToggle={toggleTask} onDelete={id=>setTasks(prev=>prev.filter(t=>t.id!==id))}/>{filteredTasks.length===0&&<div className="empty-state"><Search size={25}/><p>No tasks match your search.</p></div>}</article></section>}
-        {active==='Certificates' && <section className="page-section"><div className="page-title"><div className="eyebrow">PROOF OF PROGRESS</div><h1>Certificates & achievements</h1><p>Track your completed courses and collect evidence of your skills.</p></div><div className="certificate-grid"><article className="panel certificate-card"><span className="stat-icon mint"><GraduationCap size={22}/></span><h2>Course certificates</h2><p>Record free courses and certificates as you complete each milestone.</p><button className="secondary-button" onClick={()=>setNotice('Tip: keep the course name, completion date, credential URL and skills learned in your notes.')}>How to track a certificate</button></article><article className="panel certificate-card"><span className="stat-icon violet"><Trophy size={22}/></span><h2>Portfolio milestones</h2><p>Each finished project is proof of your practical skills. Save a live demo and source code.</p><button className="secondary-button" onClick={()=>setNotice('Suggested projects: responsive portfolio, REST API, authentication flow, full-stack app.')}>See project ideas</button></article></div><div className="panel certificate-note"><h3>Recommended free learning sources</h3><a href="https://www.freecodecamp.org/learn/" target="_blank" rel="noreferrer">freeCodeCamp <ArrowUpRight size={14}/></a><a href="https://www.theodinproject.com/" target="_blank" rel="noreferrer">The Odin Project <ArrowUpRight size={14}/></a><a href="https://skills.github.com/" target="_blank" rel="noreferrer">GitHub Skills <ArrowUpRight size={14}/></a><a href="https://developer.mozilla.org/" target="_blank" rel="noreferrer">MDN Web Docs <ArrowUpRight size={14}/></a><p className="muted">Some learning paths provide certificates; others provide projects and practical evidence rather than a formal credential.</p></div></section>}
-        {active==='Settings' && <section className="page-section"><div className="page-title"><div className="eyebrow">MAKE IT YOURS</div><h1>Settings & reminders</h1><p>Personalize your study routine. Your data is saved in this browser.</p></div><article className="panel settings-panel"><div className="panel-heading"><div><h2>Browser notifications</h2><p>Ask permission for reminders and focus-session notifications.</p></div><button className="primary-button" onClick={notify}><Bell size={16}/> Enable notifications</button></div><div className="settings-warning">Notifications depend on browser permissions. This first version does not send reminders when the app is fully closed.</div><div className="panel-heading reminder-heading"><div><h2>Study reminders</h2><p>Set a routine you can follow consistently.</p></div></div>{reminders.map(r=><div className="reminder-row" key={r.id}><div className="reminder-icon"><CalendarDays size={17}/></div><div className="reminder-info"><strong>{r.title}</strong><span>{r.time} · Every day</span></div><button className={r.enabled?'toggle enabled':'toggle'} onClick={()=>setReminders(prev=>prev.map(x=>x.id===r.id?{...x,enabled:!x.enabled}:x))} aria-label={'Toggle '+r.title}><span/></button><button className="icon-button" onClick={()=>setReminders(prev=>prev.filter(x=>x.id!==r.id))} aria-label="Delete reminder"><Trash2 size={16}/></button></div>)}<form className="add-reminder" onSubmit={e=>{e.preventDefault();setReminders(prev=>[...prev,{id:uid(),title:'Study reminder',time:reminderTime,enabled:true}]);setNotice('Recordatorio guardado.');}}><label>Add a reminder<input type="time" value={reminderTime} onChange={e=>setReminderTime(e.target.value)}/></label><button className="secondary-button" type="submit"><Plus size={15}/> Add reminder</button></form><p className="muted">MVP note: reminder preferences are stored locally. Scheduling background notifications requires a service worker and push backend.</p></article><article className="panel data-panel"><h2>Your data</h2><p>Tasks and reminders are stored in localStorage on this device. Clearing browser data can remove them.</p><button className="danger-button" onClick={()=>{if(confirm('Delete all tasks and restore the starter plan?')){setTasks(starterTasks);setNotice('Starter tasks restored.');}}}><Trash2 size={15}/> Reset tasks</button></article></section>}
-        <footer className="footer"><span>© 2026 DevPath 2027</span><span>Built for steady progress <span className="footer-heart">✦</span></span><a href="https://github.com/jamsle-web/devpath-2027" target="_blank" rel="noreferrer"><Github size={14}/> Open source project</a></footer>
-      </div>
-    </main>
-    {showAdd&&<div className="modal-backdrop" onClick={()=>setShowAdd(false)}><section className="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title" onClick={e=>e.stopPropagation()}><div className="modal-heading"><div><div className="eyebrow">BUILD YOUR ROUTINE</div><h2 id="modal-title">Add a study task</h2></div><button className="icon-button" onClick={()=>setShowAdd(false)} aria-label="Close"><X size={18}/></button></div><form onSubmit={addTask}><label>Task name<input autoFocus value={newTitle} onChange={e=>setNewTitle(e.target.value)} placeholder="e.g. Practice React components" required/></label><label>Learning area<select value={newArea} onChange={e=>setNewArea(e.target.value)}>{['Fundamentos web','Frontend','JavaScript','Backend','Database','DevOps','Proyecto práctico','Career'].map(a=><option key={a}>{a}</option>)}</select></label><label>Estimated time<select value={newMinutes} onChange={e=>setNewMinutes(e.target.value)}><option value="15">15 minutes</option><option value="25">25 minutes</option><option value="45">45 minutes</option><option value="60">1 hour</option><option value="90">1.5 hours</option><option value="120">2 hours</option></select></label><div className="modal-actions"><button type="button" className="secondary-button" onClick={()=>setShowAdd(false)}>Cancel</button><button type="submit" className="primary-button"><Plus size={16}/> Add task</button></div></form></section></div>}
-  </div>;
+// --- TIPOS ---
+interface Lesson {
+  id: string; title: string; minutes: number; url: string; type: string;
+  phaseId: string; phaseTitle: string; moduleTitle: string; status: 'not_started' | 'completed';
 }
-function TaskList({tasks,onToggle,onDelete}:{tasks:Task[];onToggle:(id:string)=>void;onDelete:(id:string)=>void}) {
-  return <div className="task-list">{tasks.map(t=><div className="task-row" key={t.id}><button className={t.done?'task-check checked':'task-check'} onClick={()=>onToggle(t.id)} aria-label={t.done?'Mark incomplete':'Mark complete'}>{t.done&&<Check size={13}/>}</button><div className="task-main"><strong className={t.done?'task-done':''}>{t.title}</strong><span>{t.area} <i/> {t.date===today()?'Today':t.date}</span></div><span className="task-duration"><Clock3 size={14}/>{t.minutes}m</span><button className="icon-button task-delete" onClick={()=>onDelete(t.id)} aria-label="Delete task"><Trash2 size={15}/></button></div>)}</div>;
+interface Phase {
+  id: string; title: string; period: string; goal: string; lessons: Lesson[]; progress: number;
+}
+interface ProgressState { [lessonId: string]: { status: 'not_started' | 'completed'; completedAt?: string; } }
+interface SessionState { totalMinutes: number; history: { date: string; minutes: number }[]; }
+interface Project { id: string; name: string; description: string; tech: string; demoUrl: string; repoUrl: string; status: 'planning' | 'in_progress' | 'done'; }
+
+// --- COMPONENTE PRINCIPAL ---
+export default function App() {
+  const initialPhases = useMemo(() => {
+    return CATALOG_DATA.phases.map(phase => {
+      const lessons: Lesson[] = phase.modules.flatMap(mod => 
+        mod.lessons.map(l => ({ ...l, phaseId: phase.id, phaseTitle: phase.title, moduleTitle: mod.title, status: 'not_started' }))
+      );
+      return { id: phase.id, title: phase.title, period: phase.period, goal: phase.goal, lessons, progress: 0 };
+    });
+  }, []);
+
+  const [phases, setPhases] = useState<Phase[]>(initialPhases);
+  const [projects, setProjects] = useState<Project[]>(() => {
+    const saved = localStorage.getItem('devpath_projects');
+    return saved ? JSON.parse(saved) : [];
+  });
+  
+  // UI States
+  const [theme, setTheme] = useState<'dark' | 'light'>(() => (localStorage.getItem('devpath_theme') as 'dark' | 'light') || 'dark');
+  const [currentView, setCurrentView] = useState<'dashboard' | 'certifications' | 'roadmap' | 'projects' | 'achievements' | 'settings'>('dashboard');
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [showStats, setShowStats] = useState(true); 
+  const [isMobile, setIsMobile] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterFavorites, setFilterFavorites] = useState(false);
+  const [selectedPhase, setSelectedPhase] = useState<Phase | null>(null);
+
+  // Persistence
+  const [progress, setProgress] = useState<ProgressState>(() => JSON.parse(localStorage.getItem('devpath_progress_v2') || '{}'));
+  const [favorites, setFavorites] = useState<string[]>(() => JSON.parse(localStorage.getItem('devpath_favorites') || '[]'));
+  const [sessions, setSessions] = useState<SessionState>(() => JSON.parse(localStorage.getItem('devpath_sessions_v2') || '{"totalMinutes":0,"history":[]}'));
+
+  // Timer
+  const [timerMinutes, setTimerMinutes] = useState(15);
+  const [timeLeft, setTimeLeft] = useState(15 * 60);
+  const [isTimerRunning, setIsTimerRunning] = useState(false);
+  const timerRef = useRef<number | null>(null);
+
+  // Efectos
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('devpath_theme', theme);
+  }, [theme]);
+
+  useEffect(() => {
+    const checkScreen = () => {
+      const width = window.innerWidth;
+      setIsMobile(width < 1024);
+      if (width >= 1024) setSidebarOpen(true);
+      if (width < 1280) setShowStats(false); 
+    };
+    checkScreen();
+    window.addEventListener('resize', checkScreen);
+    return () => window.removeEventListener('resize', checkScreen);
+  }, []);
+
+  useEffect(() => {
+    setPhases(prev => prev.map(p => {
+      const newLessons = p.lessons.map(l => ({ ...l, status: progress[l.id]?.status || 'not_started' }));
+      const completed = newLessons.filter(l => l.status === 'completed').length;
+      return { ...p, lessons: newLessons, progress: newLessons.length ? Math.round((completed / newLessons.length) * 100) : 0 };
+    }));
+  }, [progress]);
+
+  useEffect(() => { localStorage.setItem('devpath_progress_v2', JSON.stringify(progress)); }, [progress]);
+  useEffect(() => { localStorage.setItem('devpath_favorites', JSON.stringify(favorites)); }, [favorites]);
+  useEffect(() => { localStorage.setItem('devpath_sessions_v2', JSON.stringify(sessions)); }, [sessions]);
+  useEffect(() => { localStorage.setItem('devpath_projects', JSON.stringify(projects)); }, [projects]);
+
+  useEffect(() => {
+    if (isTimerRunning && timeLeft > 0) {
+      timerRef.current = window.setInterval(() => setTimeLeft((prev) => prev - 1), 1000);
+    } else if (timeLeft === 0 && isTimerRunning) {
+      handleTimerComplete();
+    }
+    return () => { if (timerRef.current) clearInterval(timerRef.current); };
+  }, [isTimerRunning, timeLeft]);
+
+  // Lógica
+  const handleTimerComplete = () => {
+    setIsTimerRunning(false);
+    if (timerRef.current) clearInterval(timerRef.current);
+    playSound();
+    setSessions(prev => ({
+      totalMinutes: prev.totalMinutes + timerMinutes,
+      history: [...prev.history, { date: new Date().toISOString(), minutes: timerMinutes }]
+    }));
+    alert(`¡Sesión de ${timerMinutes} minutos completada!`);
+    setTimeLeft(timerMinutes * 60);
+  };
+
+  const playSound = () => {
+    try {
+      const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const osc = ctx.createOscillator(); const gain = ctx.createGain();
+      osc.type = 'sine'; osc.frequency.setValueAtTime(880, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(440, ctx.currentTime + 0.5);
+      gain.gain.setValueAtTime(0.5, ctx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 1);
+      osc.connect(gain); gain.connect(ctx.destination); osc.start(); osc.stop(ctx.currentTime + 1);
+    } catch (e) {}
+  };
+
+  const toggleLessonStatus = (lessonId: string) => {
+    setProgress(prev => {
+      const current = prev[lessonId]?.status || 'not_started';
+      const next = current === 'completed' ? 'not_started' : 'completed';
+      return { ...prev, [lessonId]: { status: next, completedAt: next === 'completed' ? new Date().toISOString() : undefined } };
+    });
+  };
+
+  const toggleFavorite = (lessonId: string) => {
+    setFavorites(prev => prev.includes(lessonId) ? prev.filter(id => id !== lessonId) : [...prev, lessonId]);
+  };
+
+  const filteredPhases = useMemo(() => {
+    return phases.map(phase => {
+      const filteredLessons = phase.lessons.filter(l => {
+        const matchesSearch = l.title.toLowerCase().includes(searchTerm.toLowerCase()) || phase.title.toLowerCase().includes(searchTerm.toLowerCase());
+        const matchesFav = filterFavorites ? favorites.includes(l.id) : true;
+        return matchesSearch && matchesFav;
+      });
+      return { ...phase, lessons: filteredLessons };
+    }).filter(phase => phase.lessons.length > 0);
+  }, [phases, searchTerm, filterFavorites, favorites]);
+
+  const globalStats = useMemo(() => {
+    let total = 0, comp = 0;
+    phases.forEach(p => p.lessons.forEach(l => { total++; if (l.status === 'completed') comp++; }));
+    return { total, comp };
+  }, [phases]);
+
+  const studyHours = Math.floor(sessions.totalMinutes / 60);
+
+  const achievements = [
+    { id: 'a1', title: 'Primer Paso', desc: 'Completa tu primera lección.', icon: <CheckCircle2 size={32} />, unlocked: globalStats.comp >= 1 },
+    { id: 'a2', title: 'Estudiante Dedicado', desc: 'Acumula 5 horas de estudio.', icon: <Timer size={32} />, unlocked: studyHours >= 5 },
+    { id: 'a3', title: 'Maratonista', desc: 'Acumula 20 horas de estudio.', icon: <Flame size={32} />, unlocked: studyHours >= 20 },
+    { id: 'a4', title: 'Cazador de Certificados', desc: 'Completa una fase entera.', icon: <Medal size={32} />, unlocked: phases.some(p => p.progress === 100) },
+  ];
+
+  const calendarDays = useMemo(() => {
+    const days = [];
+    const today = new Date();
+    for (let i = 27; i >= 0; i--) {
+      const d = new Date(today); d.setDate(d.getDate() - i);
+      const dateStr = d.toISOString().split('T')[0];
+      const active = sessions.history.some(h => h.date.startsWith(dateStr));
+      days.push({ date: dateStr, active });
+    }
+    return days;
+  }, [sessions]);
+
+  return (
+    <div className="app-container">
+      {isMobile && (sidebarOpen || showStats) && (
+        <div className="overlay" onClick={() => { setSidebarOpen(false); setShowStats(false); }} />
+      )}
+
+      <aside className={`sidebar ${sidebarOpen ? 'open' : ''}`}>
+        <div className="logo-area">
+          <Code2 size={28} color="var(--accent-green)" />
+          <span className="logo-text">DevPath 2027</span>
+          {isMobile && <button className="icon-btn close-sidebar" onClick={() => setSidebarOpen(false)}><X size={20} /></button>}
+        </div>
+
+        <nav className="nav-menu">
+          <button className={`nav-item ${currentView === 'dashboard' ? 'active' : ''}`} onClick={() => { setCurrentView('dashboard'); if(isMobile) setSidebarOpen(false); }}><LayoutDashboard size={20} /> Dashboard</button>
+          <button className={`nav-item ${currentView === 'achievements' ? 'active' : ''}`} onClick={() => { setCurrentView('achievements'); if(isMobile) setSidebarOpen(false); }}><Trophy size={20} /> Logros</button>
+          <button className={`nav-item ${currentView === 'certifications' ? 'active' : ''}`} onClick={() => { setCurrentView('certifications'); if(isMobile) setSidebarOpen(false); }}><Award size={20} /> Certificaciones</button>
+          <button className={`nav-item ${currentView === 'roadmap' ? 'active' : ''}`} onClick={() => { setCurrentView('roadmap'); if(isMobile) setSidebarOpen(false); }}><BookOpen size={20} /> Mi Ruta</button>
+          <button className={`nav-item ${currentView === 'projects' ? 'active' : ''}`} onClick={() => { setCurrentView('projects'); if(isMobile) setSidebarOpen(false); }}><Code2 size={20} /> Proyectos</button>
+        </nav>
+
+        <div className="sidebar-footer">
+          <button className={`nav-item ${currentView === 'settings' ? 'active' : ''}`} onClick={() => { setCurrentView('settings'); if(isMobile) setSidebarOpen(false); }}><Settings size={20} /> Ajustes</button>
+          <div className="user-profile">
+            <div className="avatar">WJ</div>
+            <div className="user-info"><span className="user-name">WilkyJamse Dev</span><span className="user-role">Full-Stack Dev</span></div>
+          </div>
+        </div>
+      </aside>
+
+      <main className="main-content">
+        <header className="top-header">
+          <div className="header-left">
+            {isMobile && <button className="icon-btn" onClick={() => setSidebarOpen(true)}><Menu size={20} /></button>}
+            <h1 className="page-title">
+              {currentView === 'dashboard' && 'Plan de Estudios'}
+              {currentView === 'achievements' && 'Mis Logros'}
+              {currentView === 'certifications' && 'Certificaciones'}
+              {currentView === 'roadmap' && 'Mi Ruta'}
+              {currentView === 'projects' && 'Proyectos'}
+              {currentView === 'settings' && 'Ajustes'}
+            </h1>
+          </div>
+
+          <div className="header-actions">
+            {currentView === 'dashboard' && (
+              <>
+                <div className="search-bar">
+                  <Search size={18} color="var(--text-muted)" />
+                  <input type="text" placeholder="Buscar..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+                </div>
+                <button className={`icon-btn ${filterFavorites ? 'active' : ''}`} onClick={() => setFilterFavorites(!filterFavorites)} title="Filtrar Favoritos" style={{color: filterFavorites ? 'var(--accent-gold)' : ''}}>
+                  <Star size={20} fill={filterFavorites ? "currentColor" : "none"} />
+                </button>
+              </>
+            )}
+            <button className="icon-btn" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}>
+              {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
+            </button>
+            <button className="icon-btn stats-toggle" onClick={() => setShowStats(!showStats)}>
+              {showStats ? <EyeOff size={20} /> : <Eye size={20} />}
+            </button>
+          </div>
+        </header>
+
+        {currentView === 'dashboard' && (
+          <div className="kanban-board">
+            {filteredPhases.map((phase) => (
+              <div key={phase.id} className="kanban-column">
+                <div className="column-header">
+                  <div>
+                    <h2 className="column-title">{phase.title}</h2>
+                    <p className="column-period">{phase.period}</p>
+                  </div>
+                  <span className="task-count">{phase.progress}%</span>
+                </div>
+                <div className="phase-progress-bar"><div className="progress-fill" style={{ width: `${phase.progress}%`, backgroundColor: 'var(--accent-green)' }} /></div>
+                <div className="phase-goal">{phase.goal}</div>
+                <div className="task-list">
+                  {phase.lessons.map((lesson) => (
+                    <div key={lesson.id} className={`task-card ${lesson.status === 'completed' ? 'completed' : ''}`} onClick={() => setSelectedPhase(phase)}>
+                      <button className={`favorite-btn ${favorites.includes(lesson.id) ? 'active' : ''}`} onClick={(e) => { e.stopPropagation(); toggleFavorite(lesson.id); }}>
+                        <Star size={18} fill={favorites.includes(lesson.id) ? "currentColor" : "none"} />
+                      </button>
+                      <div className="task-tags">
+                        <span className="tag" style={{ backgroundColor: 'rgba(96,165,250,0.15)', color: 'var(--accent-blue)' }}>{lesson.type.toUpperCase()}</span>
+                        <span className="tag" style={{ backgroundColor: 'rgba(160,160,160,0.15)', color: 'var(--text-muted)' }}>{lesson.minutes} min</span>
+                      </div>
+                      <h3 className="task-title">{lesson.title}</h3>
+                      <div className="task-footer">
+                        <div className="task-meta"><span>{lesson.moduleTitle.substring(0, 20)}...</span></div>
+                        <div className="task-actions">
+                          <button className={`status-btn ${lesson.status === 'completed' ? 'done' : ''}`} onClick={(e) => { e.stopPropagation(); toggleLessonStatus(lesson.id); }}>
+                            {lesson.status === 'completed' ? <CheckCircle2 size={16} /> : <Timer size={16} />}
+                          </button>
+                          <a href={lesson.url} target="_blank" rel="noopener noreferrer" className="link-btn" onClick={(e) => e.stopPropagation()}><ExternalLink size={16} /></a>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {currentView === 'achievements' && (
+          <div className="achievements-grid">
+            {achievements.map(a => (
+              <div key={a.id} className={`achievement-card ${a.unlocked ? 'unlocked' : ''}`}>
+                <div className="achievement-icon">{a.icon}</div>
+                <div className="achievement-info"><h3>{a.title}</h3><p>{a.desc}</p></div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {currentView === 'certifications' && (
+          <div className="certifications-grid">
+            {CERTIFICATIONS_DATA.map((cert) => (
+              <div key={cert.id} className="cert-card">
+                <div className="cert-header">
+                  <div className="cert-icon" style={{ backgroundColor: cert.color + '22', color: cert.color }}><Award size={24} /></div>
+                  <span className={`cert-badge ${cert.type.includes('Gratis') ? 'free' : 'paid'}`}>{cert.type}</span>
+                </div>
+                <h3>{cert.title}</h3><div className="cert-platform">{cert.platform}</div>
+                <div className="cert-footer"><a href={cert.url} target="_blank" rel="noopener noreferrer" className="btn-glass" style={{ width: '100%', justifyContent: 'center' }}>Abrir Curso <ExternalLink size={16} /></a></div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {currentView === 'roadmap' && (
+          <div className="roadmap-view">
+            {phases.map((phase) => (
+              <div key={phase.id} className="roadmap-phase-card">
+                <div className="roadmap-header"><h2>{phase.title}</h2><span className="badge">{phase.period}</span></div>
+                <p className="roadmap-goal">{phase.goal}</p>
+                <div className="roadmap-lessons">
+                  {phase.lessons.map(l => (
+                    <div key={l.id} className={`roadmap-lesson ${l.status === 'completed' ? 'done' : ''}`}>
+                      <div className="roadmap-lesson-info">
+                        <button className="check-btn" onClick={() => toggleLessonStatus(l.id)}>{l.status === 'completed' ? <CheckCircle2 size={20} color="var(--accent-green)" /> : <div className="empty-circle" />}</button>
+                        <div><h4>{l.title} {l.type === 'certificate' && <Award size={14} color="#facc15" style={{display:'inline', marginLeft:4}}/>}</h4><span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{l.moduleTitle} • {l.minutes} min</span></div>
+                      </div>
+                      <a href={l.url} target="_blank" rel="noopener noreferrer" className="btn-secondary">Ver <ExternalLink size={14} /></a>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {currentView === 'projects' && (
+          <div className="projects-view">
+            <div className="add-project-card">
+              <h3><Plus size={20} /> Añadir Proyecto</h3>
+              <form onSubmit={(e) => {
+                e.preventDefault(); const fd = new FormData(e.currentTarget);
+                setProjects([...projects, { id: `p-${Date.now()}`, name: fd.get('name') as string, tech: fd.get('tech') as string, description: fd.get('description') as string, demoUrl: fd.get('demoUrl') as string, repoUrl: fd.get('repoUrl') as string, status: 'planning' }]);
+                e.currentTarget.reset();
+              }}>
+                <input type="text" name="name" placeholder="Nombre del Proyecto" required />
+                <input type="text" name="tech" placeholder="Tecnologías (ej. React, Node)" required />
+                <textarea name="description" placeholder="Breve descripción..." required></textarea>
+                <input type="url" name="demoUrl" placeholder="Link de la Demo (Opcional)" />
+                <input type="url" name="repoUrl" placeholder="Link del Repositorio / GitHub (Opcional)" />
+                <button type="submit" className="btn-primary">Crear Proyecto</button>
+              </form>
+            </div>
+            <div className="projects-grid">
+              {projects.map(p => (
+                <div key={p.id} className="project-card">
+                  <div className="project-header"><FolderGit2 size={24} color="var(--accent-blue)" /><span className={`status-badge ${p.status}`}>Planeación</span></div>
+                  <h3>{p.name}</h3><p>{p.description}</p><div className="project-tech"><strong>Tech:</strong> {p.tech}</div>
+                  {(p.demoUrl || p.repoUrl) && (
+                    <div className="project-links">
+                      {p.demoUrl && <a href={p.demoUrl} target="_blank" rel="noopener noreferrer" className="btn-secondary"><LinkIcon size={14} /> Demo</a>}
+                      {p.repoUrl && <a href={p.repoUrl} target="_blank" rel="noopener noreferrer" className="btn-secondary"><Github size={14} /> Código</a>}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {currentView === 'settings' && (
+          <div className="settings-view">
+            <div className="settings-card">
+              <h3>Gestión de Datos</h3>
+              <p>Tu progreso se guarda automáticamente en este navegador.</p>
+              <button className="btn-danger" onClick={() => { if(window.confirm('¿Borrar todo?')) { localStorage.clear(); window.location.reload(); } }}><Trash2 size={18} /> Borrar datos</button>
+            </div>
+          </div>
+        )}
+      </main>
+
+      <AnimatePresence>
+        {showStats && (
+          <motion.aside className="stats-panel" initial={{ width: 0, opacity: 0, overflow: 'hidden' }} animate={{ width: 340, opacity: 1 }} exit={{ width: 0, opacity: 0 }} transition={{ duration: 0.3 }}>
+            <div className="stats-header"><h2 className="stats-title">Estadísticas</h2><button className="icon-btn" onClick={() => setShowStats(false)}><X size={20} /></button></div>
+            <div className="stat-card"><div className="stat-icon-wrapper"><Target size={24} color="var(--accent-green)" /></div><div className="stat-info"><h3 className="stat-value">{globalStats.comp} / {globalStats.total}</h3><p className="stat-label">Lecciones</p></div></div>
+            <div className="stat-card highlight-green"><div className="stat-icon-wrapper bg-white"><CheckCircle2 size={24} color="var(--accent-green)" /></div><div className="stat-info"><h3 className="stat-value text-dark">{studyHours}</h3><p className="stat-label text-dark-muted">Horas</p></div></div>
+            
+            <div className="progress-chart-card">
+              <div className="chart-header"><h3 className="chart-title">Cronómetro</h3><Timer size={18} /></div>
+              <div className="timer-display">{Math.floor(timeLeft/60).toString().padStart(2,'0')}:{(timeLeft%60).toString().padStart(2,'0')}</div>
+              <div className="timer-controls">
+                <select value={timerMinutes} onChange={(e) => { setTimerMinutes(Number(e.target.value)); setTimeLeft(Number(e.target.value)*60); setIsTimerRunning(false); }} disabled={isTimerRunning} className="timer-select">
+                  <option value={15}>15 min</option><option value={30}>30 min</option><option value={60}>1 hora</option>
+                </select>
+                <button className="btn-icon-timer" onClick={() => { if(timeLeft===0) setTimeLeft(timerMinutes*60); setIsTimerRunning(!isTimerRunning); }}>{isTimerRunning ? <Pause size={20} /> : <Play size={20} />}</button>
+                <button className="btn-icon-timer" onClick={() => { setIsTimerRunning(false); setTimeLeft(timerMinutes * 60); }}><RotateCcw size={20} /></button>
+              </div>
+            </div>
+
+            <div className="progress-chart-card">
+              <div className="chart-header"><h3 className="chart-title">Racha de Estudio</h3><Flame size={18} color="var(--accent-orange)" /></div>
+              <div className="calendar-grid">
+                {calendarDays.map((d, i) => <div key={i} className={`calendar-day ${d.active ? 'active' : ''}`} title={d.date}></div>)}
+              </div>
+            </div>
+
+            <div className="footer-credit">WilkyJamse Dev</div>
+          </motion.aside>
+        )}
+      </AnimatePresence>
+
+      {/* MODAL DE LECCIÓN CON BOTÓN DE CALENDARIO */}
+      <AnimatePresence>
+        {selectedPhase && (
+          <motion.div className="modal-overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setSelectedPhase(null)}>
+            <motion.div className="modal-content" onClick={(e) => e.stopPropagation()}>
+              <div className="modal-header"><h2>{selectedPhase.title}</h2><button className="icon-btn" onClick={() => setSelectedPhase(null)}><X size={20} /></button></div>
+              <div className="modal-lessons">
+                {selectedPhase.lessons.map(l => (
+                  <div key={l.id} className={`modal-lesson-item ${l.status === 'completed' ? 'done' : ''}`}>
+                    <div className="modal-lesson-info">
+                      <h4>{l.title}</h4>
+                      <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{l.minutes} min</span>
+                    </div>
+                    
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      {/* BOTÓN AÑADIR AL CALENDARIO */}
+                      <AddToCalendarButton
+                        name={l.title}
+                        description={`Lección de DevPath 2027: ${l.title}. Duración: ${l.minutes} minutos.`}
+                        startDate={new Date().toISOString().split('T')[0]}
+                        startTime="19:00"
+                        endTime={`${19 + Math.floor(l.minutes / 60)}:${(l.minutes % 60).toString().padStart(2, '0')}`}
+                        location="Online - DevPath"
+                        options="'Google','Apple','Outlook.com'"
+                        buttonsList
+                        hideTextLabelButton
+                        lightMode={theme === 'light' ? 'light' : 'dark'}
+                        styleLight="--btn-background: #f3f4f6; --btn-text: #111827;"
+                        styleDark="--btn-background: #2a2a2a; --btn-text: #ffffff;"
+                      />
+                      
+                      <button className={`btn-secondary ${l.status === 'completed' ? 'done' : ''}`} onClick={() => toggleLessonStatus(l.id)}>
+                        {l.status === 'completed' ? 'Completado' : 'Marcar'}
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
 }

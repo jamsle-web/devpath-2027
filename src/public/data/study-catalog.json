@@ -1,0 +1,160 @@
+"id": "express-docs",
+      "name": "Express.js — Guía de inicio",
+      "url": "https://expressjs.com/es/starter/installing/",
+      "access": "Gratuito",
+      "credential": "Documentación oficial; sin certificado."
+    },
+    {
+      "id": "postgres-tutorial",
+      "name": "PostgreSQL Tutorial",
+      "url": "https://www.postgresql.org/docs/current/tutorial.html",
+      "access": "Gratuito",
+      "credential": "Documentación oficial; sin certificado."
+    },
+    {
+      "id": "supabase-react",
+      "name": "Supabase — React Quickstart",
+      "url": "https://supabase.com/docs/guides/getting-started/quickstarts/reactjs",
+      "access": "Documentación gratuita; el servicio tiene límites y planes que pueden cambiar.",
+      "credential": "Sin certificado."
+    },
+    {
+      "id": "vercel-academy",
+      "name": "Vercel Academy — Next.js Foundations",
+      "url": "https://vercel.com/academy/nextjs-foundations",
+      "access": "Curso de aprendizaje online; consulta las condiciones actuales de la plataforma.",
+      "credential": "No se promete certificado."
+    },
+    {
+      "id": "owasp-top10",
+      "name": "OWASP Top 10",
+      "url": "https://owasp.org/projects/top-ten/",
+      "access": "Gratuito",
+      "credential": "Recurso de seguridad, no certificado."
+    }
+  ],
+  "phases": [
+    {
+      "id": "phase-01",
+      "order": 1,
+      "title": "Fundamentos web y entorno de trabajo",
+      "period": "Octubre–noviembre 2026",
+      "level": "Principiante",
+      "goal": "Comprender cómo funciona la web, preparar las herramientas y publicar una primera página accesible.",
+      "courseIds": [
+        "mdn-start",
+        "github-basics"
+      ],
+      "project": "Página personal de una sola página, publicada y versionada en GitHub.",
+      "modules": [
+        {
+          "id": "mdn-start",
+          "title": "Primeros pasos con la web",
+          "sourceId": "mdn-learn",
+          "url": "https://developer.mozilla.org/en-US/docs/Learn_web_development/Getting_started",
+          "lessons": [
+            {
+              "id": "L001",
+              "title": "Preparar el entorno: navegador, editor y archivos",
+              "minutes": 45,
+              "url": "https://developer.mozilla.org/en-US/docs/Learn_web_development/Getting_started/Environment_setup",
+              "type": "lesson"
+            },
+            {
+              "id": "L002",
+              "title": "Cómo funciona la web y qué es una URL",
+              "minutes": 45,
+              "url": "https://developer.mozilla.org/en-US/docs/Learn_web_development/Getting_started/Web_standards",
+              "type": "lesson"
+            },
+            {
+              "id": "L003",
+              "title": "Crear y publicar tu primera página",
+              "minutes": 60,
+              "url": "https://developer.mozilla.org/en-US/docs/Learn_web_development/Getting_started/Your_first_website",
+              "type": "project"
+            },
+            {
+              "id": "L004",
+              "title": "HTML: elementos, etiquetas y estructura semántica",
+              "minutes": 60,
+              "url": "https://developer.mozilla.org/en-US/docs/Learn_web_development/Core/Structuring_content",
+              "type": "lesson"
+            }
+          ]
+        },
+        {
+          "id": "github-basics",
+          "title": "Git y GitHub para proyectos personales",
+          "sourceId": "github-skills",
+          "url": "https://skills.github.com/",
+          "lessons": [
+            {
+              "id": "L005",
+              "title": "Crear un repositorio y entender commits",
+              "minutes": 45,
+              "url": "https://skills.github.com/",
+              "type": "practice"
+            },
+            {
+              "id": "L006",
+              "title": "Escribir un README útil con Markdown",
+              "minutes": 45,
+              "url": "https://skills.github.com/",
+              "type": "practice"
+            },
+            {
+              "id": "L007",
+              "title": "Publicar una página con GitHub Pages",
+              "minutes": 60,
+              "url": "https://skills.github.com/",
+              "type": "project"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "phase-02",
+      "order": 2,
+      "title": "HTML, CSS, responsive design y accesibilidad",
+      "period": "Noviembre–diciembre 2026",
+      "level": "Principiante",
+      "goal": "Construir interfaces semánticas, adaptables y utilizables en móvil y escritorio.",
+      "courseIds": [
+        "mdn-html-css",
+        "fcc-responsive"
+      ],
+      "project": "Landing page responsive para un negocio local, con formulario accesible.",
+      "modules": [
+        {
+          "id": "mdn-html-css",
+          "title": "Estructura, estilos y diseño responsive",
+          "sourceId": "mdn-learn",
+          "url": "https://developer.mozilla.org/en-US/docs/Learn_web_development/Core",
+          "lessons": [
+            {
+              "id": "L008",
+              "title": "Estructurar contenido con HTML semántico",
+              "minutes": 60,
+              "url": "https://developer.mozilla.org/en-US/docs/Learn_web_development/Core/Structuring_content",
+              "type": "lesson"
+            },
+            {
+              "id": "L009",
+              "title": "Enlaces, imágenes y contenido multimedia",
+              "minutes": 45,
+              "url": "https://developer.mozilla.org/en-US/docs/Learn_web_development/Core/Structuring_content",
+              "type": "lesson"
+            },
+            {
+              "id": "L010",
+              "title": "CSS: selectores, cascada y especificidad",
+              "minutes": 60,
+              "url": "https://developer.mozilla.org/en-US/docs/Learn_web_development/Core/Styling_basics",
+              "type": "lesson"
+            },
+            {
+              "id": "L011",
+              "title": "Modelo de caja, unidades y tipografía",
+              "minutes": 60,
