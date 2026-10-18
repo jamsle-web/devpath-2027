@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { 
   Search, LayoutDashboard, BookOpen, Code2, Settings, X, 
   CheckCircle2, Target, Menu, Play, Pause, RotateCcw, Timer, ExternalLink, 
   Trash2, Plus, FolderGit2, Award, Github, Link as LinkIcon, 
-  Eye, EyeOff, Star, Trophy, Sun, Moon, Flame, Medal, Calendar
+  Eye, EyeOff, Star, Trophy, Sun, Moon, Flame, Medal
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CATALOG_DATA, CERTIFICATIONS_DATA } from './data';
@@ -403,7 +403,6 @@ export default function App() {
         )}
       </AnimatePresence>
 
-      {/* MODAL DE LECCIÓN CON BOTÓN DE CALENDARIO */}
       <AnimatePresence>
         {selectedPhase && (
           <motion.div className="modal-overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setSelectedPhase(null)}>
@@ -418,7 +417,6 @@ export default function App() {
                     </div>
                     
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                      {/* BOTÓN AÑADIR AL CALENDARIO */}
                       <AddToCalendarButton
                         name={l.title}
                         description={`Lección de DevPath 2027: ${l.title}. Duración: ${l.minutes} minutos.`}
